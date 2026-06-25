@@ -3,6 +3,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import { useLocation } from "react-router-dom";
 
 import { CSVLink } from "react-csv";
 
@@ -35,6 +36,11 @@ import type {
 } from "../types/lead.types";
 
 const DashboardPage = () => {
+  // Get current user details for RBAC UI gating
+  const userStr = localStorage.getItem("user");
+  const currentUser = userStr ? JSON.parse(userStr) : null;
+  const isAdmin = currentUser?.role === "admin";
+
   const [leads, setLeads] = useState<Lead[]>([]);
   const [stats, setStats] = useState<LeadStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -121,6 +127,20 @@ const DashboardPage = () => {
     fetchLeads();
     fetchStats();
   }, [debouncedSearch, statusFilter, sourceFilter, page]);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const hash = location.hash;
+
+    if (hash) {
+      const element = document.querySelector(hash);
+
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  }, [location.hash]);
 
   // Create Lead
   const handleCreateLead = async (e: FormEvent) => {
@@ -266,7 +286,7 @@ const DashboardPage = () => {
   return (
     <div className="min-h-screen bg-slate-50/50">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl px-8 py-8 mb-8 shadow-xl relative overflow-hidden">
+      <div id="summary" className="scroll-mt-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl px-8 py-8 mb-8 shadow-xl relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent pointer-events-none" />
         <div className="relative z-10">
           <h1 className="text-4xl font-extrabold tracking-tight">
@@ -336,8 +356,10 @@ const DashboardPage = () => {
         </div>
       )}
 
-      {/* Creation form */}
-      <div className="bg-white p-8 rounded-3xl shadow-md border border-slate-100 mb-8 transition-all hover:shadow-lg duration-300">
+      {/* Leads Database Section */}
+      <div id="leads" className="scroll-mt-6 space-y-8">
+        {/* Creation form */}
+        <div className="bg-white p-8 rounded-3xl shadow-md border border-slate-100 mb-8 transition-all hover:shadow-lg duration-300">
         <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
           <svg className="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
@@ -451,10 +473,11 @@ const DashboardPage = () => {
       </div>
 
       {/* Recharts Analytics Charts */}
-      {statsLoading ? (
-        <ChartsSkeleton />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div id="analytics" className="scroll-mt-6">
+        {statsLoading ? (
+          <ChartsSkeleton />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {/* Pie Chart for Sources */}
           <div className="bg-white p-6 rounded-3xl shadow-md border border-slate-100 hover:shadow-lg transition-shadow duration-300">
             <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
@@ -524,6 +547,7 @@ const DashboardPage = () => {
           </div>
         </div>
       )}
+      </div>
 
       {/* Main Database Table */}
       {loading ? (
@@ -609,15 +633,17 @@ const DashboardPage = () => {
                           </svg>
                         </button>
 
-                        <button
-                          onClick={() => handleDeleteLead(lead._id)}
-                          className="text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100/75 p-2 rounded-xl transition-all duration-200 flex items-center justify-center shadow-sm hover:shadow"
-                          title="Delete Lead"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleDeleteLead(lead._id)}
+                            className="text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100/75 p-2 rounded-xl transition-all duration-200 flex items-center justify-center shadow-sm hover:shadow"
+                            title="Delete Lead"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -658,6 +684,7 @@ const DashboardPage = () => {
           )}
         </div>
       )}
+      </div>
 
       {/* Edit Dialog Overlay / Modal */}
       {editingLead && (

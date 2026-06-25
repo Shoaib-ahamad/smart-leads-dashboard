@@ -3,7 +3,7 @@ import {
   type FormEvent,
 } from "react";
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 import toast from "react-hot-toast";
 
@@ -174,6 +174,14 @@ const LoginPage = () => {
                 : "Sign In"}
             </button>
           </form>
+
+          {/* Signup Link */}
+          <p className="text-sm text-gray-500 text-center mt-6">
+            Don't have an account?{" "}
+            <Link to="/signup" className="text-blue-600 hover:underline font-semibold">
+              Sign Up
+            </Link>
+          </p>
 
           {/* Footer */}
           <p className="text-sm text-gray-500 text-center mt-8">
